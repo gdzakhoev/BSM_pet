@@ -46,18 +46,14 @@ class Option:
         Returns:
             Union[float, np.ndarray]: Payoff value(s)
         """
-        if isinstance(spot_price, np.ndarray):
-            # For array inputs
-            if self.option_type == OptionType.CALL:
-                return np.where(spot_price > self.strike_price, 
-                               spot_price - self.strike_price, 0.0)
+        if self.option_type == OptionType.CALL:
+            if isinstance(spot_price, np.ndarray):
+                return np.maximum(spot_price - self.strike_price, 0.0)
             else:
-                return np.where(spot_price < self.strike_price,
-                               self.strike_price - spot_price, 0.0)
-        else:
-            # For scalar inputs
-            if self.option_type == OptionType.CALL:
                 return max(spot_price - self.strike_price, 0.0)
+        else:
+            if isinstance(spot_price, np.ndarray):
+                return np.maximum(self.strike_price - spot_price, 0.0)
             else:
                 return max(self.strike_price - spot_price, 0.0)
             
