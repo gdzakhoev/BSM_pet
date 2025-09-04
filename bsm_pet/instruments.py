@@ -1,6 +1,6 @@
 """Option contract definitions."""
 from enum import Enum
-from typing import List, Optional
+from typing import List, Optional, Union
 import numpy as np
 
 class OptionType(Enum):
@@ -36,7 +36,7 @@ class Option:
         self.exercise_type = exercise_type
         self.underlying_price = underlying_price
         
-    def payoff(self, spot_price):
+    def payoff(self, spot_price: float) -> float:
         """
         Calculate option payoff at expiration.
         
@@ -87,17 +87,21 @@ class AsianOption(Option):
                          ExerciseType.ASIAN, underlying_price)
         self.averaging_dates = averaging_dates
         
-    def payoff(self, spot_prices):
+    def payoff(self, spot_prices) -> float:
         """
         Calculate payoff for Asian option.
         
         Args:
-            spot_prices (List[float]): List of spot prices
+            spot_prices (Union[float, List[float], np.ndarray]): Spot price or array of spot prices
             
         Returns:
             float: Payoff value
         """
-        avg_price = np.mean(spot_prices)
+        if isinstance(spot_prices, (list, np.ndarray)):
+            avg_price = np.mean(spot_prices)
+        else:
+            avg_price = spot_prices
+            
         if self.option_type == OptionType.CALL:
             return max(avg_price - self.strike_price, 0)
         return max(self.strike_price - avg_price, 0)
