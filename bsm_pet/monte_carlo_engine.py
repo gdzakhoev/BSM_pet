@@ -6,7 +6,7 @@ from .numerical_greeks import NumericalGreeks
 class MonteCarloEngine:
     """Pricing engine using Monte Carlo simulation."""
     
-    def __init__(self, seed=None):
+    def __init__(self, seed: int = None):
         """
         Initialize Monte Carlo engine.
         
@@ -18,7 +18,8 @@ class MonteCarloEngine:
             np.random.seed(seed)
         self.numerical_greeks = NumericalGreeks(self)
     
-    def calculate(self, option, market_data, num_simulations=100000, time_steps=100):
+    def calculate(self, option, market_data, 
+                 num_simulations: int = 100000, time_steps: int = 100):
         """
         Calculate option price using Monte Carlo simulation.
         
@@ -63,14 +64,20 @@ class MonteCarloEngine:
         
         # Calculate payoff
         if is_asian:
+            # For Asian options, use average price at specified dates
             averaging_prices = asset_paths[:, averaging_indices]
+            # Calculate average for each path
             avg_prices = np.mean(averaging_prices, axis=1)
-            payoffs = option.payoff(avg_prices)
+            # Calculate payoff for each path
+            payoffs = np.zeros(num_simulations)
+            for i in range(num_simulations):
+                payoffs[i] = option.payoff(avg_prices[i])
         else:
-            if option.option_type == OptionType.CALL:
-                payoffs = np.maximum(asset_paths[:, -1] - K, 0)
-            else:
-                payoffs = np.maximum(K - asset_paths[:, -1], 0)
+            # For other options, use final price
+            final_prices = asset_paths[:, -1]
+            payoffs = np.zeros(num_simulations)
+            for i in range(num_simulations):
+                payoffs[i] = option.payoff(final_prices[i])
         
         # Discount payoffs to present value
         price = np.exp(-r * T) * np.mean(payoffs)
