@@ -11,7 +11,8 @@ class LongstaffSchwartzEngine:
     continuation values for American options.
     """
     
-    def calculate(self, option, market_data, num_simulations=10000, time_steps=100):
+    def calculate(self, option, market_data, 
+                 num_simulations: int = 10000, time_steps: int = 100):
         """
         Calculate American option price using Longstaff-Schwartz algorithm.
         
@@ -50,9 +51,11 @@ class LongstaffSchwartzEngine:
         
         # At expiration, cash flow is the payoff
         if option.option_type == OptionType.CALL:
-            cash_flows[:, -1] = np.maximum(asset_paths[:, -1] - K, 0)
+            cash_flows[:, -1] = np.where(asset_paths[:, -1] > K, 
+                                        asset_paths[:, -1] - K, 0.0)
         else:
-            cash_flows[:, -1] = np.maximum(K - asset_paths[:, -1], 0)
+            cash_flows[:, -1] = np.where(asset_paths[:, -1] < K,
+                                        K - asset_paths[:, -1], 0.0)
         
         # Work backwards through time
         for t in range(time_steps - 1, 0, -1):
@@ -70,7 +73,7 @@ class LongstaffSchwartzEngine:
                 current_prices = asset_paths[in_the_money, t]
                 
                 # Regression of discounted cash flows on current prices
-                X = current_prices
+                X = current_prices.reshape(-1, 1)
                 X2 = X * X
                 Xs = np.column_stack([X, X2])
                 Y = discounted_cash_flows[in_the_money]
@@ -87,15 +90,14 @@ class LongstaffSchwartzEngine:
                 exercise = exercise_values > continuation_values
                 
                 # Update cash flows
-                cash_flows[in_the_money, t] = np.where(exercise, exercise_values, 0)
+                cash_flows[in_the_money, t] = np.where(exercise, exercise_values, 0.0)
                 
                 # Set future cash flows to zero if we exercise now
-                cash_flows[in_the_money, t + 1:] = np.where(
-                    exercise.reshape(-1, 1), 0, cash_flows[in_the_money, t + 1:]
-                )
+                cash_flows[in_the_money, t + 1:] = 0.0
         
         # Discount all cash flows back to present value
-        discounted_cash_flows = cash_flows * np.exp(-r * dt * np.arange(time_steps + 1))
+        discount_factors = np.exp(-r * dt * np.arange(time_steps + 1))
+        discounted_cash_flows = cash_flows * discount_factors
         price = np.mean(np.sum(discounted_cash_flows, axis=1))
         
         return {'price': price}
