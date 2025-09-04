@@ -75,9 +75,11 @@ class MonteCarloEngine:
         else:
             # For other options, use final price
             final_prices = asset_paths[:, -1]
-            payoffs = np.zeros(num_simulations)
-            for i in range(num_simulations):
-                payoffs[i] = option.payoff(final_prices[i])
+            # Use vectorized payoff calculation for efficiency
+            if option.option_type == OptionType.CALL:
+                payoffs = np.maximum(final_prices - K, 0)
+            else:
+                payoffs = np.maximum(K - final_prices, 0)
         
         # Discount payoffs to present value
         price = np.exp(-r * T) * np.mean(payoffs)
