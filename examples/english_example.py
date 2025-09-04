@@ -20,15 +20,15 @@ def demonstrate_all_option_types():
     
     # Market data
     market_data = MarketData(
-        risk_free_rate=0.05,    # 5% annual interest rate
-        volatility=0.2,         # 20% annual volatility
-        dividend_yield=0.01     # 1% annual dividend yield
+        risk_free_rate=0.05,
+        volatility=0.2,
+        dividend_yield=0.01
     )
     
     # Create different option types with same parameters
-    S = 100.0  # Underlying price
-    K = 100.0  # Strike price
-    T = 1.0    # Time to expiration (years)
+    S = 100.0
+    K = 100.0
+    T = 1.0
     
     # European option
     european_call = EuropeanOption(K, T, OptionType.CALL)
@@ -142,7 +142,7 @@ def demonstrate_implied_volatility():
     fair_price = analytical_engine.calculate(option, market_data)['price']
     
     # Calculate implied volatility from market price
-    market_price = fair_price  # Assume market price equals fair price
+    market_price = fair_price
     implied_vol = calculate_implied_volatility(option, market_price, market_data)
     
     print(f"Option with 20% volatility has fair price: ${fair_price:.4f}")
@@ -162,7 +162,7 @@ def demonstrate_risk_metrics():
     
     # Generate sample returns
     np.random.seed(42)
-    returns = np.random.normal(0.001, 0.02, 1000)  # Mean return 0.1%, std 2%
+    returns = np.random.normal(0.001, 0.02, 1000)
     
     # Calculate all risk metrics
     var_95 = RiskMetrics.calculate_value_at_risk(returns, 0.95)
@@ -250,7 +250,7 @@ def demonstrate_different_strikes():
     )
     
     # Create options with different strikes
-    strikes = [90.0, 100.0, 110.0]  # ITM, ATM, OTM
+    strikes = [90.0, 100.0, 110.0]
     expiration_time = 1.0
     underlying_price = 100.0
     
@@ -286,7 +286,7 @@ def demonstrate_time_decay():
     )
     
     # Create options with different expiration times
-    times = [1.0, 0.5, 0.25, 0.1]  # Years to expiration
+    times = [1.0, 0.5, 0.25, 0.1]
     strike_price = 100.0
     underlying_price = 100.0
     
