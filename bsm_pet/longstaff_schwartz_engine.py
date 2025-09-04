@@ -6,24 +6,12 @@ from .instruments import OptionType
 class LongstaffSchwartzEngine:
     """
     Pricing engine for American options using Longstaff-Schwartz algorithm.
-    
-    Uses Monte Carlo simulation with least squares regression to estimate
-    continuation values for American options.
     """
     
     def calculate(self, option, market_data, 
-                 num_simulations: int = 10000, time_steps: int = 100):
+                 num_simulations=10000, time_steps=50):
         """
         Calculate American option price using Longstaff-Schwartz algorithm.
-        
-        Args:
-            option: Option object
-            market_data (MarketData): Market data container
-            num_simulations (int): Number of simulation paths
-            time_steps (int): Number of time steps
-            
-        Returns:
-            dict: Dictionary containing price
         """
         S = option.underlying_price
         K = option.strike_price
@@ -51,11 +39,9 @@ class LongstaffSchwartzEngine:
         
         # At expiration, cash flow is the payoff
         if option.option_type == OptionType.CALL:
-            cash_flows[:, -1] = np.where(asset_paths[:, -1] > K, 
-                                        asset_paths[:, -1] - K, 0.0)
+            cash_flows[:, -1] = np.maximum(asset_paths[:, -1] - K, 0.0)
         else:
-            cash_flows[:, -1] = np.where(asset_paths[:, -1] < K,
-                                        K - asset_paths[:, -1], 0.0)
+            cash_flows[:, -1] = np.maximum(K - asset_paths[:, -1], 0.0)
         
         # Work backwards through time
         for t in range(time_steps - 1, 0, -1):
@@ -78,22 +64,30 @@ class LongstaffSchwartzEngine:
                 Xs = np.column_stack([X, X2])
                 Y = discounted_cash_flows[in_the_money]
                 
+                # Skip if not enough data points
+                if len(Y) < 3:
+                    continue
+                
                 # Fit quadratic polynomial
-                model = LinearRegression()
-                model.fit(Xs, Y)
-                continuation_values = model.predict(Xs)
-                
-                # Calculate exercise values
-                exercise_values = option.payoff(current_prices)
-                
-                # Decide whether to exercise
-                exercise = exercise_values > continuation_values
-                
-                # Update cash flows
-                cash_flows[in_the_money, t] = np.where(exercise, exercise_values, 0.0)
-                
-                # Set future cash flows to zero if we exercise now
-                cash_flows[in_the_money, t + 1:] = 0.0
+                try:
+                    model = LinearRegression()
+                    model.fit(Xs, Y)
+                    continuation_values = model.predict(Xs)
+                    
+                    # Calculate exercise values
+                    exercise_values = option.payoff(current_prices)
+                    
+                    # Decide whether to exercise
+                    exercise = exercise_values > continuation_values
+                    
+                    # Update cash flows
+                    cash_flows[in_the_money, t] = np.where(exercise, exercise_values, 0.0)
+                    
+                    # Set future cash flows to zero if we exercise now
+                    cash_flows[in_the_money, t + 1:] = 0.0
+                except:
+                    # If regression fails, continue without exercise
+                    continue
         
         # Discount all cash flows back to present value
         discount_factors = np.exp(-r * dt * np.arange(time_steps + 1))
