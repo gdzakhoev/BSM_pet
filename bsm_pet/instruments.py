@@ -46,10 +46,20 @@ class Option:
         Returns:
             Union[float, np.ndarray]: Payoff value(s)
         """
-        if self.option_type == OptionType.CALL:
-            return np.maximum(spot_price - self.strike_price, 0)
+        if isinstance(spot_price, np.ndarray):
+            # For array inputs
+            if self.option_type == OptionType.CALL:
+                return np.where(spot_price > self.strike_price, 
+                               spot_price - self.strike_price, 0.0)
+            else:
+                return np.where(spot_price < self.strike_price,
+                               self.strike_price - spot_price, 0.0)
         else:
-            return np.maximum(self.strike_price - spot_price, 0)
+            # For scalar inputs
+            if self.option_type == OptionType.CALL:
+                return max(spot_price - self.strike_price, 0.0)
+            else:
+                return max(self.strike_price - spot_price, 0.0)
             
     def __repr__(self):
         return f"Option(K={self.strike_price}, T={self.expiration_time}, type={self.option_type}, exercise={self.exercise_type})"
@@ -104,6 +114,6 @@ class AsianOption(Option):
             avg_price = spot_prices
             
         if self.option_type == OptionType.CALL:
-            return max(avg_price - self.strike_price, 0)
+            return max(avg_price - self.strike_price, 0.0)
         else:
-            return max(self.strike_price - avg_price, 0)
+            return max(self.strike_price - avg_price, 0.0)
