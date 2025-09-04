@@ -1,5 +1,5 @@
 """
-BSM_pet Library Usage Example - English Version
+BSM_pet Library Usage Example
 
 This example demonstrates the basic usage of the BSM_pet library
 for option pricing and risk analysis.
