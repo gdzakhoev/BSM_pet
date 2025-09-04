@@ -36,19 +36,20 @@ class Option:
         self.exercise_type = exercise_type
         self.underlying_price = underlying_price
         
-    def payoff(self, spot_price: float) -> float:
+    def payoff(self, spot_price: Union[float, np.ndarray]) -> Union[float, np.ndarray]:
         """
         Calculate option payoff at expiration.
         
         Args:
-            spot_price (float): Price of underlying asset
+            spot_price (Union[float, np.ndarray]): Price of underlying asset
             
         Returns:
-            float: Payoff value
+            Union[float, np.ndarray]: Payoff value(s)
         """
         if self.option_type == OptionType.CALL:
-            return max(spot_price - self.strike_price, 0)
-        return max(self.strike_price - spot_price, 0)
+            return np.maximum(spot_price - self.strike_price, 0)
+        else:
+            return np.maximum(self.strike_price - spot_price, 0)
             
     def __repr__(self):
         return f"Option(K={self.strike_price}, T={self.expiration_time}, type={self.option_type}, exercise={self.exercise_type})"
@@ -87,7 +88,7 @@ class AsianOption(Option):
                          ExerciseType.ASIAN, underlying_price)
         self.averaging_dates = averaging_dates
         
-    def payoff(self, spot_prices) -> float:
+    def payoff(self, spot_prices: Union[float, List[float], np.ndarray]) -> float:
         """
         Calculate payoff for Asian option.
         
@@ -104,4 +105,5 @@ class AsianOption(Option):
             
         if self.option_type == OptionType.CALL:
             return max(avg_price - self.strike_price, 0)
-        return max(self.strike_price - avg_price, 0)
+        else:
+            return max(self.strike_price - avg_price, 0)
